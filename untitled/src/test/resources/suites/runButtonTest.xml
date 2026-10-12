@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="ApiDemos - Preference" verbose="1">
+
+    <test name="Home > Views > Buttons > Dissplayed UI">
+        <classes>
+            <class name="com.tu.tests.ButtonsTest">
+<!--                <methods>-->
+<!--                    <include name="ButtonsTest"/>-->
+<!--                </methods>-->
+            </class>
+        </classes>
+    </test>
+
+</suite>

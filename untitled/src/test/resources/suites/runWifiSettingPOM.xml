@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="ApiDemos - Preference" verbose="1">
+
+    <test name="Preference - WiFi settings">
+        <classes>
+            <class name="com.tu.tests.WifiSettingPOM">
+                <methods>
+                    <include name="setWifiName"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

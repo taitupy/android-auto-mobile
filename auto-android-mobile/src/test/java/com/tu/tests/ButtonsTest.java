@@ -48,7 +48,7 @@ public class ButtonsTest extends BaseTest {
         int normal = page.getNormalHeight();
         int small  = page.getSmallHeight();
 
-        Assert.assertFalse(small < normal,
+        Assert.assertTrue(small < normal,
                 "Small (" + small + "px) phải thấp hơn Normal (" + normal + "px)");
     }
 

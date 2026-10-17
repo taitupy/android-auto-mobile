@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!-- SMOKE: vài test quan trọng nhất, chạy nhanh. Dùng cho mỗi lần push / pull request -->
+<suite name="ApiDemos - Smoke" verbose="1">
+
+    <test name="Smoke - Preference">
+        <classes>
+            <class name="com.tu.tests.WifiSettingPOM">
+                <methods>
+                    <include name="setWifiName"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Smoke - Views > Buttons">
+        <classes>
+            <class name="com.tu.tests.ButtonsTest">
+                <methods>
+                    <include name="verifyButtonsDisplayed"/>
+                    <include name="verifyToggleOnOff"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

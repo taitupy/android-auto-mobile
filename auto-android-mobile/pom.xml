@@ -12,6 +12,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Suite mặc định khi chạy "mvn test". Đổi bằng: mvn test -Dsuite=smoke -->
+        <suite>regression</suite>
     </properties>
 
     <dependencies>
@@ -29,5 +32,29 @@
             <version>7.10.2</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Ghi log cho SLF4J (bỏ cảnh báo "SLF4J: No providers were found") -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.16</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Cho phép chạy test bằng lệnh: mvn test -Dsuite=<tên file xml trong suites/> -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>src/test/resources/suites/${suite}.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

@@ -10,7 +10,8 @@ jobs:
     timeout-minutes: 45
 
     env:
-      SUITE: smoke            # Mỗi lần push chạy suite smoke. Đổi thành regression nếu muốn chạy toàn bộ
+      SUITE: smoke                      # Đổi thành regression nếu muốn chạy toàn bộ
+      PROJECT_DIR: auto-android-mobile  # Thư mục chứa pom.xml (repo gốc là D:\mobile-automation)
 
     steps:
       - name: Checkout code
@@ -22,6 +23,7 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
+          cache-dependency-path: auto-android-mobile/pom.xml
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,13 +37,9 @@ jobs:
           appium driver install uiautomator2@3.7.8
           appium -v
 
-      - name: Download ApiDemos apk
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p apps
-          gh release download --repo appium/android-apidemos --pattern "ApiDemos-debug.apk" --dir apps
-          ls -lh apps
+      - name: Check apk
+        # apk đã có sẵn trong repo tại apps/ApiDemos-debug.apk
+        run: ls -lh apps/ApiDemos-debug.apk
 
       - name: Start Appium server
         run: |
@@ -66,7 +64,8 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
-          script: mvn -B test -Denv=staging -Dsuite=${{ env.SUITE }}
+          working-directory: ${{ env.PROJECT_DIR }}
+          script: mvn -B test -Denv=staging -Dsuite=${{ env.SUITE }} -Dapp.path=../apps/ApiDemos-debug.apk
 
       - name: Upload test results
         if: always()             # Luôn upload, kể cả khi test fail
@@ -74,7 +73,7 @@ jobs:
         with:
           name: test-results-${{ env.SUITE }}-${{ github.run_number }}
           path: |
-            target/surefire-reports/
-            screenshots/
+            auto-android-mobile/target/surefire-reports/
+            auto-android-mobile/screenshots/
             appium.log
           retention-days: 14

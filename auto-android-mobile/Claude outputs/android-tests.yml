@@ -12,6 +12,7 @@ jobs:
     env:
       SUITE: smoke                      # Đổi thành regression nếu muốn chạy toàn bộ
       PROJECT_DIR: auto-android-mobile  # Thư mục chứa pom.xml (repo gốc là D:\mobile-automation)
+      ALLURE_VERSION: 2.30.0
 
     steps:
       - name: Checkout code
@@ -30,12 +31,13 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Install Appium + UiAutomator2 driver
+      - name: Install Appium + UiAutomator2 driver + Allure CLI
         # Ghim đúng version đang dùng trên máy local
         run: |
-          npm install -g appium@2.11.5
+          npm install -g appium@2.11.5 allure-commandline@${ALLURE_VERSION}
           appium driver install uiautomator2@3.7.8
           appium -v
+          allure --version
 
       - name: Check apk
         # apk đã có sẵn trong repo tại apps/ApiDemos-debug.apk
@@ -67,13 +69,98 @@ jobs:
           working-directory: ${{ env.PROJECT_DIR }}
           script: mvn -B test -Denv=staging -Dsuite=${{ env.SUITE }} -Dapp.path=../apps/ApiDemos-debug.apk
 
+      # ===================== ALLURE REPORT =====================
+      # Các bước dưới đều có "if: always()" -> vẫn chạy khi test fail (lúc cần report nhất)
+
+      - name: Generate Allure report (1 file HTML)
+        if: always()
+        run: |
+          allure generate ${PROJECT_DIR}/target/allure-results --clean --single-file -o allure-report
+          ls -lh allure-report
+
+      - name: Tổng hợp kết quả
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, glob, os
+          stats = {"passed": 0, "failed": 0, "broken": 0, "skipped": 0}
+          for f in glob.glob(os.environ["PROJECT_DIR"] + "/target/allure-results/*-result.json"):
+              st = json.load(open(f, encoding="utf-8")).get("status", "unknown")
+              stats[st] = stats.get(st, 0) + 1
+          total = sum(stats.values())
+          ok = total > 0 and stats["failed"] == 0 and stats["broken"] == 0
+          with open(os.environ["GITHUB_ENV"], "a") as env:
+              env.write(f"TOTAL={total}\n")
+              for k, v in stats.items():
+                  env.write(f"{k.upper()}={v}\n")
+              env.write(f"RESULT={'PASSED' if ok else 'FAILED'}\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as s:
+              s.write(f"## Kết quả: {'✅ PASSED' if ok else '❌ FAILED'}\n\n")
+              s.write("| Total | Passed | Failed | Broken | Skipped |\n|---|---|---|---|---|\n")
+              s.write(f"| {total} | {stats['passed']} | {stats['failed']} | {stats['broken']} | {stats['skipped']} |\n")
+          PY
+
+      - name: Đóng gói report (.zip)
+        if: always()
+        run: |
+          mkdir -p package
+          cp -r allure-report package/ 2>/dev/null || true
+          cp -r ${PROJECT_DIR}/screenshots package/ 2>/dev/null || true
+          cp appium.log package/ 2>/dev/null || true
+          cd package && zip -r ../allure-report-${SUITE}-${{ github.run_number }}.zip . && cd ..
+          ls -lh *.zip
+
       - name: Upload test results
-        if: always()             # Luôn upload, kể cả khi test fail
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ env.SUITE }}-${{ github.run_number }}
           path: |
-            auto-android-mobile/target/surefire-reports/
-            auto-android-mobile/screenshots/
+            allure-report/
+            ${{ env.PROJECT_DIR }}/target/surefire-reports/
+            ${{ env.PROJECT_DIR }}/screenshots/
             appium.log
           retention-days: 14
+
+      # ===================== GỬI EMAIL =====================
+      # Cần tạo 3 secret trong repo: Settings -> Secrets and variables -> Actions
+      #   MAIL_USERNAME : địa chỉ Gmail dùng để gửi
+      #   MAIL_PASSWORD : App Password 16 ký tự của Gmail (KHÔNG phải mật khẩu đăng nhập)
+      #   MAIL_TO       : người nhận, nhiều người cách nhau bằng dấu phẩy
+      - name: Gửi email kết quả
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: Appium CI <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.MAIL_TO }}
+          subject: "[${{ env.RESULT }}] Android Appium Tests #${{ github.run_number }} - suite ${{ env.SUITE }}"
+          html_body: |
+            <h2 style="color:${{ env.RESULT == 'PASSED' && '#1a7f37' || '#cf222e' }}">
+              ${{ env.RESULT == 'PASSED' && '✅' || '❌' }} ${{ env.RESULT }}
+            </h2>
+            <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:Arial">
+              <tr style="background:#f2f2f2"><th>Total</th><th>Passed</th><th>Failed</th><th>Broken</th><th>Skipped</th></tr>
+              <tr align="center">
+                <td>${{ env.TOTAL }}</td>
+                <td style="color:#1a7f37"><b>${{ env.PASSED }}</b></td>
+                <td style="color:#cf222e"><b>${{ env.FAILED }}</b></td>
+                <td style="color:#bf8700"><b>${{ env.BROKEN }}</b></td>
+                <td>${{ env.SKIPPED }}</td>
+              </tr>
+            </table>
+            <p>
+              <b>Suite:</b> ${{ env.SUITE }}<br>
+              <b>Branch:</b> ${{ github.ref_name }}<br>
+              <b>Commit:</b> ${{ github.event.head_commit.message }} (${{ github.actor }})<br>
+              <b>Chi tiết run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Mở trên GitHub</a>
+            </p>
+            <p>📎 Đính kèm:<br>
+              • <b>index.html</b>: Allure report, tải về rồi mở bằng trình duyệt<br>
+              • <b>allure-report-*.zip</b>: report + ảnh chụp khi fail + appium.log
+            </p>
+          attachments: allure-report/index.html,allure-report-${{ env.SUITE }}-${{ github.run_number }}.zip

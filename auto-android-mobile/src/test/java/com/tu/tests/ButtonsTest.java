@@ -1,12 +1,16 @@
 package com.tu.tests;
 
 import com.tu.base.BaseTest;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import com.tu.pages.ButtonsPage;
 import com.tu.pages.HomePage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 
+@Epic("ApiDemos")
+@Feature("Views > Buttons")
 public class ButtonsTest extends BaseTest {
 
     private ButtonsPage openButtonsPage() {

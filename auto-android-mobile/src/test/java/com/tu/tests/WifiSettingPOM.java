@@ -1,12 +1,16 @@
 package com.tu.tests;
 
 import com.tu.base.BaseTest;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
 import com.tu.pages.HomePage;
 import com.tu.pages.PreferenceDependenciesPage;
 import com.tu.pages.WifiSettingsDialog;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+@Epic("ApiDemos")
+@Feature("Preference > WiFi settings")
 public class WifiSettingPOM extends BaseTest {
 
     @Test(description = "Đặt tên WiFi thành công")

@@ -15,6 +15,9 @@
 
         <!-- Suite mặc định khi chạy "mvn test". Đổi bằng: mvn test -Dsuite=smoke -->
         <suite>regression</suite>
+
+        <allure.version>2.29.0</allure.version>
+        <allure.cli.version>2.30.0</allure.cli.version>
     </properties>
 
     <dependencies>
@@ -30,6 +33,14 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>7.10.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Allure Report: tự ghi kết quả từng test vào target/allure-results -->
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-testng</artifactId>
+            <version>${allure.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -53,6 +64,20 @@
                     <suiteXmlFiles>
                         <suiteXmlFile>src/test/resources/suites/${suite}.xml</suiteXmlFile>
                     </suiteXmlFiles>
+                    <systemPropertyVariables>
+                        <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
+            <!-- Xem report Allure trên máy:  mvn allure:serve   |   Tạo report:  mvn allure:report -->
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>2.15.2</version>
+                <configuration>
+                    <reportVersion>${allure.cli.version}</reportVersion>
+                    <resultsDirectory>allure-results</resultsDirectory>
                 </configuration>
             </plugin>
         </plugins>

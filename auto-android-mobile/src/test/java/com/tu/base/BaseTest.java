@@ -2,11 +2,13 @@ package com.tu.base;
 
 import com.tu.core.DriverFactory;
 import com.tu.core.DriverManager;
+import io.qameta.allure.Allure;
 import org.openqa.selenium.OutputType;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -49,6 +51,10 @@ public class BaseTest {
             Files.copy(src.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
 
             System.out.println("[Screenshot] " + dest.toAbsolutePath());
+
+            // Đính kèm ảnh vào Allure report (hiện ngay trong bước bị fail)
+            Allure.addAttachment("Screenshot khi fail", "image/png",
+                    new ByteArrayInputStream(Files.readAllBytes(dest)), ".png");
         } catch (Exception e) {
             System.out.println("[Screenshot] Khong chup duoc anh: " + e.getMessage());
         }

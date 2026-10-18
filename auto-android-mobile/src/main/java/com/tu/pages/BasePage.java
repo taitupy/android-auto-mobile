@@ -24,10 +24,13 @@ public abstract class BasePage {
     }
 
     /**
-     * Chờ 1 điều kiện. Nếu hết giờ mà màn hình đang bị popup hệ thống "isn't responding" che
-     * -> đóng popup rồi chờ lại thêm 1 lần.
+     * Chờ 1 điều kiện, có xử lý popup hệ thống "... isn't responding" (ANR):
+     *   - Trước khi thao tác: nếu đang có popup ANR -> đóng ngay
+     *     (tránh đọc nhầm tiêu đề popup ANR, vì nó dùng chung id android:id/alertTitle)
+     *   - Hết giờ chờ: kiểm tra lại popup (có thể vừa hiện ra trong lúc chờ) -> đóng và chờ thêm 1 lần
      */
     private <T> T waitUntil(ExpectedCondition<T> condition) {
+        SystemDialogHandler.dismissAnrDialogs(driver);
         try {
             return wait.until(condition);
         } catch (TimeoutException e) {

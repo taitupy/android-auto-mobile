@@ -2,6 +2,7 @@ package com.tu.base;
 
 import com.tu.core.DriverFactory;
 import com.tu.core.DriverManager;
+import com.tu.core.SystemDialogHandler;
 import io.qameta.allure.Allure;
 import org.openqa.selenium.OutputType;
 import org.testng.ITestResult;
@@ -21,6 +22,8 @@ public class BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         DriverManager.setDriver(DriverFactory.createAndroidDriver());
+        // Emulator vừa boot hay hiện popup "... isn't responding" che app -> đóng trước khi test
+        SystemDialogHandler.dismissAnrDialogs(DriverManager.getDriver());
     }
 
     @AfterMethod(alwaysRun = true)

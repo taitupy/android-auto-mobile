@@ -30,7 +30,7 @@
 
     <test name="Smoke - OS > SMS Messaging">
         <classes>
-            <class name="com.tu.tests.SMSMessaging">
+            <class name="com.tu.tests.SMSMessagingTest">
                 <methods>
                     <include name="verifySmsMessagingDisplayed"/>
                     <include name="verifyEnterBothFields"/>

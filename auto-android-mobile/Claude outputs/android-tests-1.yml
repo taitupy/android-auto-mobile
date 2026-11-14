@@ -4,22 +4,30 @@ on:
   push:
     branches: [ main ]        # Chỉ chạy khi push code lên nhánh main
 
+permissions:
+  contents: write             # Cho phép đẩy Allure report lên nhánh gh-pages
+
+concurrency:
+  group: android-tests        # Không cho 2 lần chạy cùng lúc ghi đè report của nhau
+  cancel-in-progress: false
+
 jobs:
   android-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
 
     env:
       SUITE: smoke                      # Đổi thành regression nếu muốn chạy toàn bộ
       PROJECT_DIR: auto-android-mobile  # Thư mục chứa pom.xml (repo gốc là D:\mobile-automation)
       ALLURE_VERSION: 2.30.0
+      PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "17"
@@ -27,7 +35,7 @@ jobs:
           cache-dependency-path: auto-android-mobile/pom.xml
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
 
@@ -72,10 +80,37 @@ jobs:
       # ===================== ALLURE REPORT =====================
       # Các bước dưới đều có "if: always()" -> vẫn chạy khi test fail (lúc cần report nhất)
 
-      - name: Generate Allure report (1 file HTML)
+      - name: Lấy lịch sử report các lần chạy trước (nhánh gh-pages)
+        if: always()
+        continue-on-error: true       # Lần chạy đầu chưa có nhánh gh-pages -> bỏ qua
+        uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Generate Allure report (có History/Trend)
         if: always()
         run: |
-          allure generate ${PROJECT_DIR}/target/allure-results --clean --single-file -o allure-report
+          RESULTS=${PROJECT_DIR}/target/allure-results
+          mkdir -p "$RESULTS"
+          # 1. Chép lịch sử cũ vào -> report có biểu đồ Trend qua các lần chạy
+          if [ -d gh-pages/history ]; then cp -r gh-pages/history "$RESULTS/history"; fi
+          # 2. Thông tin lần chạy (hiện ở mục Executors trên trang Overview)
+          cat > "$RESULTS/executor.json" <<EOF
+          {
+            "name": "GitHub Actions",
+            "type": "github",
+            "buildOrder": ${{ github.run_number }},
+            "buildName": "Run #${{ github.run_number }} - suite ${SUITE}",
+            "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "reportUrl": "${PAGES_URL}",
+            "reportName": "Android Appium Tests"
+          }
+          EOF
+          # 3. Report nhiều file -> publish lên GitHub Pages
+          allure generate "$RESULTS" --clean -o allure-site
+          # 4. Report 1 file HTML -> đính kèm email
+          allure generate "$RESULTS" --clean --single-file -o allure-report
           ls -lh allure-report
 
       - name: Tổng hợp kết quả
@@ -97,7 +132,8 @@ jobs:
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as s:
               s.write(f"## Kết quả: {'✅ PASSED' if ok else '❌ FAILED'}\n\n")
               s.write("| Total | Passed | Failed | Broken | Skipped |\n|---|---|---|---|---|\n")
-              s.write(f"| {total} | {stats['passed']} | {stats['failed']} | {stats['broken']} | {stats['skipped']} |\n")
+              s.write(f"| {total} | {stats['passed']} | {stats['failed']} | {stats['broken']} | {stats['skipped']} |\n\n")
+              s.write(f"📊 Allure report: {os.environ['PAGES_URL']}\n")
           PY
 
       - name: Đóng gói report (.zip)
@@ -112,7 +148,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ env.SUITE }}-${{ github.run_number }}
           path: |
@@ -122,14 +158,23 @@ jobs:
             appium.log
           retention-days: 14
 
+      - name: Publish Allure report lên GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-site
+          commit_message: "Allure report - run #${{ github.run_number }}"
+
       # ===================== GỬI EMAIL =====================
-      # Cần tạo 3 secret trong repo: Settings -> Secrets and variables -> Actions
+      # Cần 3 secret trong repo: Settings -> Secrets and variables -> Actions
       #   MAIL_USERNAME : địa chỉ Gmail dùng để gửi
       #   MAIL_PASSWORD : App Password 16 ký tự của Gmail (KHÔNG phải mật khẩu đăng nhập)
       #   MAIL_TO       : người nhận, nhiều người cách nhau bằng dấu phẩy
       - name: Gửi email kết quả
         if: always()
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v24
         with:
           server_address: smtp.gmail.com
           server_port: 465
@@ -154,13 +199,14 @@ jobs:
               </tr>
             </table>
             <p>
+              <b>📊 Xem Allure report online:</b> <a href="${{ env.PAGES_URL }}">${{ env.PAGES_URL }}</a><br>
               <b>Suite:</b> ${{ env.SUITE }}<br>
               <b>Branch:</b> ${{ github.ref_name }}<br>
               <b>Commit:</b> ${{ github.event.head_commit.message }} (${{ github.actor }})<br>
               <b>Chi tiết run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Mở trên GitHub</a>
             </p>
             <p>📎 Đính kèm:<br>
-              • <b>index.html</b>: Allure report, tải về rồi mở bằng trình duyệt<br>
+              • <b>index.html</b>: Allure report 1 file, tải về rồi mở bằng trình duyệt<br>
               • <b>allure-report-*.zip</b>: report + ảnh chụp khi fail + appium.log
             </p>
           attachments: allure-report/index.html,allure-report-${{ env.SUITE }}-${{ github.run_number }}.zip

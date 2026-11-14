@@ -5,6 +5,7 @@ import com.tu.core.DriverFactory;
 import com.tu.core.DriverManager;
 import com.tu.core.SystemDialogHandler;
 import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.android.AndroidStartScreenRecordingOptions;
 import io.qameta.allure.Allure;
 import org.openqa.selenium.OutputType;
 import org.testng.ITestResult;
@@ -18,8 +19,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.Map;
 
 public class BaseTest {
@@ -53,6 +56,7 @@ public class BaseTest {
         writeAllureEnvironment(DriverManager.getDriver());
         // Emulator vừa boot hay hiện popup "... isn't responding" che app -> đóng trước khi test
         SystemDialogHandler.dismissAnrDialogs(DriverManager.getDriver());
+        startVideoRecording();
     }
 
     // =====================================================================
@@ -61,10 +65,12 @@ public class BaseTest {
     @AfterMethod(alwaysRun = true)
     public void tearDown(ITestResult result) {
         try {
-            if (result.getStatus() == ITestResult.FAILURE) {
+            boolean failed = result.getStatus() == ITestResult.FAILURE;
+            if (failed) {
                 takeScreenshot(result);
                 attachPageSource();
             }
+            stopVideoRecording(failed);   // chỉ đính kèm video khi test fail
         } finally {
             DriverManager.quitDriver();
         }
@@ -107,6 +113,45 @@ public class BaseTest {
                     new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), ".xml");
         } catch (Exception e) {
             System.out.println("[PageSource] Khong lay duoc page source: " + e.getMessage());
+        }
+    }
+
+    // =====================================================================
+    // Quay video màn hình (bật/tắt bằng record.video trong config)
+    // =====================================================================
+
+    private static boolean isVideoEnabled() {
+        return Boolean.parseBoolean(ConfigReader.get("record.video", "false"));
+    }
+
+    /** Bắt đầu quay màn hình device (Android giới hạn tối đa 3 phút/lần quay) */
+    private void startVideoRecording() {
+        if (!isVideoEnabled() || DriverManager.getDriver() == null) {
+            return;
+        }
+        try {
+            DriverManager.getDriver().startRecordingScreen(
+                    new AndroidStartScreenRecordingOptions()
+                            .withTimeLimit(Duration.ofMinutes(3))
+                            .withBitRate(2_000_000));          // 2 Mbps: đủ nét, file nhỏ
+        } catch (Exception e) {
+            System.out.println("[Video] Khong bat dau quay duoc: " + e.getMessage());
+        }
+    }
+
+    /** Dừng quay; nếu test fail thì đính kèm video vào Allure (test pass thì bỏ để report nhẹ) */
+    private void stopVideoRecording(boolean attach) {
+        if (!isVideoEnabled() || DriverManager.getDriver() == null) {
+            return;
+        }
+        try {
+            String base64 = DriverManager.getDriver().stopRecordingScreen();
+            if (attach && base64 != null && !base64.isEmpty()) {
+                byte[] video = Base64.getMimeDecoder().decode(base64);
+                Allure.addAttachment("Video khi fail", "video/mp4", new ByteArrayInputStream(video), ".mp4");
+            }
+        } catch (Exception e) {
+            System.out.println("[Video] Khong lay duoc video: " + e.getMessage());
         }
     }
 

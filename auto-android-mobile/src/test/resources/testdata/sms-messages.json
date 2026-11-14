@@ -1,0 +1,13 @@
+{
+  "phones": [
+    { "caseName": "Di động 10 số",      "phone": "0901234567" },
+    { "caseName": "Có mã quốc gia +84", "phone": "+84901234567" },
+    { "caseName": "Số tổng đài",        "phone": "19006538" }
+  ],
+  "messages": [
+    { "caseName": "Ngắn",              "message": "Hi" },
+    { "caseName": "Tiếng Việt có dấu", "message": "Chúc mừng bạn nhận được 100 điểm thưởng" },
+    { "caseName": "Ký tự đặc biệt",    "message": "!@#$%^&*()_+-=" },
+    { "caseName": "Có số",             "message": "OTP của bạn là 123456" }
+  ]
+}

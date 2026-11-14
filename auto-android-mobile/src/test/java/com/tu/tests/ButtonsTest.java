@@ -3,6 +3,9 @@ package com.tu.tests;
 import com.tu.base.BaseTest;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.Story;
 import com.tu.pages.ButtonsPage;
 import com.tu.pages.HomePage;
 import org.testng.Assert;
@@ -17,6 +20,8 @@ public class ButtonsTest extends BaseTest {
         return new HomePage().openViews().openButtons();
     }
 
+    @Story("Hiển thị nút")
+    @Severity(SeverityLevel.CRITICAL)
     @Test(description = "TC01 - Hiển thị đủ 3 nút với text đúng")
     public void verifyButtonsDisplayed() {
         ButtonsPage page = openButtonsPage();
@@ -34,6 +39,8 @@ public class ButtonsTest extends BaseTest {
         soft.assertAll();
     }
 
+    @Story("Trạng thái nút")
+    @Severity(SeverityLevel.NORMAL)
     @Test(description = "TC02 - Nút Normal và Small bấm được")
     public void verifyButtonsClickable() {
         ButtonsPage page = openButtonsPage();
@@ -45,6 +52,8 @@ public class ButtonsTest extends BaseTest {
         soft.assertAll();
     }
 
+    @Story("Kích thước nút")
+    @Severity(SeverityLevel.MINOR)
     @Test(description = "TC03 - Nút Small có chiều cao nhỏ hơn nút Normal")
     public void verifySmallButtonSize() {
         ButtonsPage page = openButtonsPage();
@@ -56,6 +65,8 @@ public class ButtonsTest extends BaseTest {
                 "Small (" + small + "px) phải thấp hơn Normal (" + normal + "px)");
     }
 
+    @Story("Bật/tắt Toggle")
+    @Severity(SeverityLevel.NORMAL)
     @Test(description = "TC04 - Toggle mặc định là OFF")
     public void verifyToggleDefaultOff() {
         ButtonsPage page = openButtonsPage();
@@ -68,6 +79,8 @@ public class ButtonsTest extends BaseTest {
         soft.assertAll();
     }
 
+    @Story("Bật/tắt Toggle")
+    @Severity(SeverityLevel.CRITICAL)
     @Test(description = "TC05 - Bấm toggle: OFF → ON → OFF")
     public void verifyToggleOnOff() {
         ButtonsPage page = openButtonsPage();

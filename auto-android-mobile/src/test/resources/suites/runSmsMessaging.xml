@@ -8,7 +8,7 @@
 
     <test name="Home > OS > SMS Messaging">
         <classes>
-            <class name="com.tu.tests.SMSMessaging"/>
+            <class name="com.tu.tests.SMSMessagingTest"/>
         </classes>
     </test>
 

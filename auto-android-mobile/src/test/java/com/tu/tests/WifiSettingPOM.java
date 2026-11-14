@@ -3,9 +3,13 @@ package com.tu.tests;
 import com.tu.base.BaseTest;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
+import io.qameta.allure.Story;
 import com.tu.pages.HomePage;
 import com.tu.pages.PreferenceDependenciesPage;
 import com.tu.pages.WifiSettingsDialog;
+import com.tu.utils.TestDataReader;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -13,9 +17,11 @@ import org.testng.annotations.Test;
 @Feature("Preference > WiFi settings")
 public class WifiSettingPOM extends BaseTest {
 
+    @Story("Đặt tên WiFi")
+    @Severity(SeverityLevel.CRITICAL)
     @Test(description = "Đặt tên WiFi thành công")
     public void setWifiName() {
-        String wifiName = "Tu WiFi";
+        String wifiName = TestDataReader.getString("wifi.json", "wifiName");   // đọc từ testdata/wifi.json
 
         // 1-3. Home -> Preference -> Preference dependencies -> tick WiFi
         PreferenceDependenciesPage page = new HomePage()

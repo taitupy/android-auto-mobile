@@ -3,6 +3,7 @@ package com.tu.tests;
 import com.tu.base.BaseTest;
 import com.tu.pages.HomePage;
 import com.tu.pages.SMSMessagingPage;
+import com.tu.utils.TestDataReader;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Severity;
@@ -20,7 +21,7 @@ import org.testng.asserts.SoftAssert;
  */
 @Epic("ApiDemos")
 @Feature("OS > SMS Messaging")
-public class SMSMessaging extends BaseTest {
+public class SMSMessagingTest extends BaseTest {
 
     private SMSMessagingPage openSmsMessagingPage() {
         return new HomePage().openOS().openSmsMessaging();
@@ -120,14 +121,24 @@ public class SMSMessaging extends BaseTest {
         Assert.assertNotEquals(page.getRecipient(), "0901234567", "Recipient chưa được xóa");
     }
 
+    /** Dữ liệu đọc từ src/test/resources/testdata/sms-messages.json -> thêm case chỉ cần sửa file JSON */
     @DataProvider(name = "messages")
     public Object[][] messages() {
-        return new Object[][] {
-                {"Ngắn",              "Hi"},
-                {"Tiếng Việt có dấu", "Chúc mừng bạn nhận được 100 điểm thưởng"},
-                {"Ký tự đặc biệt",    "!@#$%^&*()_+-="},
-                {"Có số",             "OTP của bạn là 123456"},
-        };
+        return TestDataReader.toDataProvider("sms-messages.json", "messages", "caseName", "message");
+    }
+
+    @DataProvider(name = "phones")
+    public Object[][] phones() {
+        return TestDataReader.toDataProvider("sms-messages.json", "phones", "caseName", "phone");
+    }
+
+    @Story("Nhập Recipient")
+    @Severity(SeverityLevel.NORMAL)
+    @Test(dataProvider = "phones", description = "TC09 - Nhập Recipient với nhiều định dạng số điện thoại")
+    public void verifyRecipientWithDifferentData(String caseName, String phone) {
+        SMSMessagingPage page = openSmsMessagingPage().enterRecipient(phone);
+
+        Assert.assertEquals(page.getRecipient(), phone, "Case [" + caseName + "] hiển thị sai");
     }
 
     @Story("Nhập Message Body")

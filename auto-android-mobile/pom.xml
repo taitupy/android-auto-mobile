@@ -44,6 +44,14 @@
             <!-- Không để scope test: BasePage (src/main) cần dùng Allure để ghi step vào report -->
         </dependency>
 
+        <!-- Đọc test data từ file JSON (src/test/resources/testdata) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.18.2</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Ghi log cho SLF4J (bỏ cảnh báo "SLF4J: No providers were found") -->
         <dependency>
             <groupId>org.slf4j</groupId>

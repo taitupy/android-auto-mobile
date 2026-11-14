@@ -16,3 +16,6 @@ allure-report/
 Thumbs.db
 # File apk (CI tự tải về)
 apps/*.apk
+
+# Bo cai Allure CLI do "mvn allure:serve" tu tai ve
+.allure/

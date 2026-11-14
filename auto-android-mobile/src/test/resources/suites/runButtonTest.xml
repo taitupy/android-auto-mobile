@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 <suite name="ApiDemos - Views" verbose="1">
+    <!-- Chạy lại test fail theo retry.count trong config (dev = 0, CI = 1) -->
+    <listeners>
+        <listener class-name="com.tu.listeners.RetryListener"/>
+    </listeners>
 
     <test name="Home > Views > Buttons">
         <classes>

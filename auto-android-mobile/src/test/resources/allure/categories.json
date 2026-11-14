@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Popup hệ thống che màn hình (ANR - isn't responding)",
+    "messageRegex": "(?s).*(responding|aerr_).*",
+    "matchedStatuses": ["failed", "broken"]
+  },
+  {
+    "name": "Không kết nối được Appium / emulator",
+    "messageRegex": "(?s).*(SessionNotCreated|Could not start a new session|Connection refused|ConnectionException).*",
+    "matchedStatuses": ["broken"]
+  },
+  {
+    "name": "Thao tác sai loại element (vd: nhập chữ vào TextView)",
+    "messageRegex": "(?s).*(InvalidElementState|Cannot set the element).*",
+    "matchedStatuses": ["broken"]
+  },
+  {
+    "name": "Không tìm thấy element (locator sai / màn hình chưa load)",
+    "messageRegex": "(?s).*(NoSuchElement|was not found|could not be located|Expected condition failed).*",
+    "matchedStatuses": ["broken", "failed"]
+  },
+  {
+    "name": "Sai dữ liệu / kết quả (Assert fail - có thể là BUG)",
+    "messageRegex": "(?s).*(expected \\[|asserts failed).*",
+    "matchedStatuses": ["failed"]
+  }
+]

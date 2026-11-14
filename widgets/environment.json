@@ -1,0 +1,1 @@
+[{"values":["staging"],"name":"Environment"},{"values":["smoke"],"name":"Suite"},{"values":["Android 14"],"name":"Platform"},{"values":["sdk_gphone64_x86_64"],"name":"Device"},{"values":["emulator-5554"],"name":"Device.Name"},{"values":["io.appium.android.apis"],"name":"App.Package"},{"values":["http://127.0.0.1:4723"],"name":"Appium.URL"},{"values":["17.0.21"],"name":"Java"}]
